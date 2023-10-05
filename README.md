@@ -1,1 +1,1 @@
-# MLOps_repo
+# Repository for MLOps course
