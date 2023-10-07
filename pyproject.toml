@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "fashion-mnist"
+version = "0.1.0"
+description = "Fashion MNIST with Pytorch CNN"
+authors = ["Kravchenko01 <roma.kravchenco.2001@mail.ru>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+matplotlib = "^3.8.0"
+torch = "^2.1.0"
+torchvision = "^0.16.0"
+
+
+[[tool.poetry.source]]
+name = "pytorch"
+url = "https://download.pytorch.org/whl/cpu"
+priority = "explicit"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
