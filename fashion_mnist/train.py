@@ -67,7 +67,7 @@ if __name__ == '__main__':
 
     loss_list, iteration_list = train_model(model, train_loader)
 
-    torch.save(model.state_dict(), './trained_weights_FascionCNN.pth')
+    torch.save(model.state_dict(), './trained_weights_FashionCNN.pth')
 
     # plt.plot(iteration_list, loss_list)
     # plt.xlabel("No. of Iteration")
