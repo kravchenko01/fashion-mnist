@@ -1,0 +1,6 @@
+outs:
+- md5: b99a460e16e5dea108b44b4242e339db.dir
+  size: 85828693
+  nfiles: 8
+  hash: md5
+  path: FashionMNIST
