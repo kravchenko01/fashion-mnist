@@ -8,8 +8,9 @@ from torchvision import transforms, datasets
 from model import FashionCNN
 
 
+DATA_PATH = '../data'
+NUM_CLASSES = 10
 BATCH_SIZE = 100
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 def output_label(label):
     output_mapping = {
@@ -27,7 +28,7 @@ def output_label(label):
     input = (label.item() if type(label) == torch.Tensor else label)
     return output_mapping[input]
 
-def test_model(model, test_loader):
+def test_model(model, test_loader, device):
     # Testing the model   
     model.eval()
 
@@ -57,7 +58,6 @@ def test_model(model, test_loader):
                 label = labels[i]
                 class_correct[label] += c[i].item()
                 total_correct[label] += 1
-            
 
     metrics_dct = {}
     metrics_dct['Accuracy'] = (correct / total).item()
@@ -67,23 +67,25 @@ def test_model(model, test_loader):
     
     return metrics_dct, predicted_lst
 
-if __name__ == '__main__':
+def main():
     # считываем с диска модель, загружаем валидационный датасет,
     # предсказываем моделью ответы для этих данных, записываем ответы на диск в .csv файл,
     # выводим в stdout (`print`) необходимые метрики на этом датасете.
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    test_set = datasets.FashionMNIST(root='./', train=False, download=True, transform=transforms.Compose([transforms.ToTensor()]))
+    test_set = datasets.FashionMNIST(root=DATA_PATH, train=False, download=True, transform=transforms.Compose([transforms.ToTensor()]))
     test_loader = DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=False)
 
-    model = FashionCNN()
+    model = FashionCNN(num_classes=NUM_CLASSES)
     model.load_state_dict(torch.load('./trained_weights_FashionCNN.pth'))
     model.to(device)
 
-    metrics_dct, predicted_lst = test_model(model, test_loader)
+    metrics_dct, predicted_lst = test_model(model, test_loader, device)
     print('METRICS ON TEST DATA:')
     for i in metrics_dct:
         print(i, metrics_dct[i])
 
     np.savetxt('predicted_labels.csv', np.array(predicted_lst), delimiter=',')
 
-    
+if __name__ == '__main__':
+    main()

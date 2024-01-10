@@ -1,8 +1,10 @@
 from torch import nn
 
 class FashionCNN(nn.Module):
-    def __init__(self):
+    def __init__(self, num_classes=10):
         super(FashionCNN, self).__init__()
+
+        self.num_classes = num_classes
         
         self.layer1 = nn.Sequential(
             nn.Conv2d(in_channels=1, out_channels=32, kernel_size=3, padding=1),
@@ -21,7 +23,7 @@ class FashionCNN(nn.Module):
         self.fc1 = nn.Linear(in_features=64*6*6, out_features=600)
         self.drop = nn.Dropout1d(0.25)
         self.fc2 = nn.Linear(in_features=600, out_features=120)
-        self.fc3 = nn.Linear(in_features=120, out_features=10)
+        self.fc3 = nn.Linear(in_features=120, out_features=self.num_classes)
         
     def forward(self, x):
         out = self.layer1(x)

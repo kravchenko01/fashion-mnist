@@ -8,23 +8,22 @@ from torchvision import transforms, datasets
 from model import FashionCNN
 
 
+DATA_PATH = '../data'
+NUM_CLASSES = 10
 BATCH_SIZE = 100
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+NUM_EPOCH = 1
+LEARNING_RATE = 0.001
 
-def train_model(model, train_loader):
+def train_model(model, train_loader, device):
     model.train()
 
-    Loss_func = nn.CrossEntropyLoss()
-    learning_rate = 0.001
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    loss_func = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
-    num_epochs = 5
     count = 0
-
     loss_list = []
     iteration_list = []
-
-    for epoch in range(num_epochs):
+    for epoch in range(NUM_EPOCH):
         for images, labels in train_loader:
             images, labels = images.to(device), labels.to(device)
         
@@ -32,7 +31,7 @@ def train_model(model, train_loader):
             # labels = Variable(labels)
              
             outputs = model(images)
-            loss = Loss_func(outputs, labels)
+            loss = loss_func(outputs, labels)
             
             optimizer.zero_grad()
             loss.backward()
@@ -49,12 +48,11 @@ def train_model(model, train_loader):
 
     return loss_list, iteration_list
 
-
-
-if __name__ == '__main__':
+def main():
     #Загружаем данные, обучаем модель и сохраняем на диск
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    train_set = datasets.FashionMNIST(root='./', train=True, download=True, transform=transforms.Compose([transforms.ToTensor()]))
+    train_set = datasets.FashionMNIST(root=DATA_PATH, train=True, download=True, transform=transforms.Compose([transforms.ToTensor()]))
     train_loader = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True)
 
     # image, label = next(iter(train_set))
@@ -62,10 +60,10 @@ if __name__ == '__main__':
     # plt.imshow(image.squeeze(), cmap="gray")
     # plt.savefig("./example.png")
 
-    model = FashionCNN()
+    model = FashionCNN(num_classes=NUM_CLASSES)
     model.to(device)
 
-    loss_list, iteration_list = train_model(model, train_loader)
+    loss_list, iteration_list = train_model(model, train_loader, device)
 
     torch.save(model.state_dict(), './trained_weights_FashionCNN.pth')
 
@@ -74,3 +72,6 @@ if __name__ == '__main__':
     # plt.ylabel("Loss")
     # plt.title("Iterations vs Loss")
     # plt.savefig("./training_loss.png")
+
+if __name__ == '__main__':
+    main()
