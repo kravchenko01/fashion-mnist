@@ -19,7 +19,7 @@ poetry run python train.py
 
 - Инференс:
 ```bash
-poetry run python infet.py
+poetry run python infer.py
 ```
 
 - Запуск `pre-commit`:
