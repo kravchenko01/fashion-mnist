@@ -7,14 +7,27 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-matplotlib = "^3.8.0"
+# matplotlib = "^3.8.0"
 torch = "^2.1.1"
 torchvision = "^0.16.1"
+
+[tool.poetry.dev-dependencies]
+pre-commit = "^3.6.0"
 
 [[tool.poetry.source]]
 name = "pytorch"
 url = "https://download.pytorch.org/whl/cpu"
 priority = "explicit"
+
+[tool.black]
+line-length = 90
+target-version = ["py39"]
+
+[tool.isort]
+src_paths = ["ds_project"]
+profile = "black"
+line_length = 90
+lines_after_imports = 2
 
 [build-system]
 requires = ["poetry-core"]
