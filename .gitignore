@@ -162,3 +162,4 @@ cython_debug/
 # custom
 *.pth
 *.csv
+fashion_mnist/outputs/

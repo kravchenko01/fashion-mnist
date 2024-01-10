@@ -1,0 +1,10 @@
+data:
+  path: ../data
+model:
+  num_classes: 10
+train:
+  batch_size: 100
+  epochs: 1
+  learning_rate: 0.001
+infer:
+  batch_size: 100

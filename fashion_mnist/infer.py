@@ -1,13 +1,10 @@
+import hydra
 import numpy as np
 import torch
 from model import FashionCNN
+from omegaconf import DictConfig  # , OmegaConf
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
-
-
-DATA_PATH = "../data"
-NUM_CLASSES = 10
-BATCH_SIZE = 100
 
 
 def output_label(label):
@@ -27,7 +24,7 @@ def output_label(label):
     return output_mapping[input]
 
 
-def test_model(model, test_loader, device):
+def test_model(model, test_loader, batch_size, device):
     # Testing the model
     model.eval()
 
@@ -43,7 +40,6 @@ def test_model(model, test_loader, device):
         for images, labels in test_loader:
             images, labels = images.to(device), labels.to(device)
 
-            # test = Variable(images)
             outputs = model(images)
 
             predicted = torch.max(outputs, 1)[1].to(device)
@@ -53,7 +49,7 @@ def test_model(model, test_loader, device):
             correct += (predicted == labels).sum()
             total += len(labels)
 
-            for i in range(BATCH_SIZE):
+            for i in range(batch_size):
                 label = labels[i]
                 class_correct[label] += c[i].item()
                 total_correct[label] += 1
@@ -69,7 +65,8 @@ def test_model(model, test_loader, device):
     return metrics_dct, predicted_lst
 
 
-def main():
+@hydra.main(version_base="1.3", config_path="../conf", config_name="config")
+def main(cfg: DictConfig):
     # считываем с диска модель, загружаем валидационный датасет,
     # предсказываем моделью ответы для этих данных,
     # записываем ответы на диск в .csv файл,
@@ -77,18 +74,20 @@ def main():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     test_set = datasets.FashionMNIST(
-        root=DATA_PATH,
+        root=cfg.data.path,
         train=False,
-        download=True,
+        download=False,
         transform=transforms.Compose([transforms.ToTensor()]),
     )
-    test_loader = DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=False)
+    test_loader = DataLoader(test_set, batch_size=cfg.infer.batch_size, shuffle=False)
 
-    model = FashionCNN(num_classes=NUM_CLASSES)
+    model = FashionCNN(num_classes=cfg.model.num_classes)
     model.load_state_dict(torch.load("./trained_weights_FashionCNN.pth"))
     model.to(device)
 
-    metrics_dct, predicted_lst = test_model(model, test_loader, device)
+    metrics_dct, predicted_lst = test_model(
+        model, test_loader, batch_size=cfg.infer.batch_size, device=device
+    )
     print("METRICS ON TEST DATA:")
     for i in metrics_dct:
         print(i, metrics_dct[i])

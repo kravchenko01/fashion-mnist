@@ -4,7 +4,7 @@
 
 [Репозиторий курса](https://github.com/girafe-ai/mlops)
 
-## Запуск
+## Запуск hw1
 
 - Настройка окружения:
 ```bash
@@ -26,4 +26,13 @@ poetry run python infer.py
 ```bash
 pre-commit install
 pre-commit run --all-files
+```
+
+## Hw2
+
+[Google Drive с данными для DVC](https://drive.google.com/drive/u/6/folders/1pseSLm5GJNShatTFvCr5DsU9K61fVr5R)
+
+- Загрузка данных:
+```bash
+dvc pull
 ```
