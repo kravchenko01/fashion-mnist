@@ -1,81 +1,32 @@
-# import matplotlib.pyplot as plt
 import hydra
-import torch
+import lightning.pytorch as pl
+from data import MyDataModule
 from model import FashionCNN
-from omegaconf import DictConfig  # , OmegaConf
-from torch import nn
-from torch.utils.data import DataLoader
-from torchvision import datasets, transforms
-
-
-def train_model(model, train_loader, num_epoch, lr, device):
-    model.train()
-
-    loss_func = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-
-    count = 0
-    loss_list = []
-    iteration_list = []
-    for _ in range(num_epoch):
-        for images, labels in train_loader:
-            images, labels = images.to(device), labels.to(device)
-
-            outputs = model(images)
-            loss = loss_func(outputs, labels)
-
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-
-            count += 1
-
-            if not (count % 50):
-                loss_list.append(loss.data)
-                iteration_list.append(count)
-
-            if not (count % 500):
-                print("Iteration: {}, Loss: {}".format(count, loss.data))
-
-    return loss_list, iteration_list
+from omegaconf import DictConfig
 
 
 @hydra.main(version_base="1.3", config_path="../conf", config_name="config")
 def main(cfg: DictConfig):
     # Загружаем данные, обучаем модель и сохраняем на диск
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    pl.seed_everything(42)
 
-    train_set = datasets.FashionMNIST(
-        root=cfg.data.path,
-        train=True,
-        download=False,
-        transform=transforms.Compose([transforms.ToTensor()]),
+    dm = MyDataModule(
+        data_path=cfg.data.path,
+        batch_size=cfg.data.batch_size,
     )
-    train_loader = DataLoader(train_set, batch_size=cfg.train.batch_size, shuffle=True)
+    model = FashionCNN(cfg)
 
-    # image, label = next(iter(train_set))
-    # print(label, image.shape)
-    # plt.imshow(image.squeeze(), cmap="gray")
-    # plt.savefig("./example.png")
-
-    model = FashionCNN(num_classes=cfg.model.num_classes)
-    model.to(device)
-
-    loss_list, iteration_list = train_model(
-        model,
-        train_loader,
-        num_epoch=cfg.train.epochs,
-        lr=cfg.train.learning_rate,
-        device=device,
+    checkpoint_callback = pl.callbacks.ModelCheckpoint(
+        dirpath="./", filename="weights_FashionCNN"
     )
 
-    torch.save(model.state_dict(), "./trained_weights_FashionCNN.pth")
+    trainer = pl.Trainer(
+        accelerator=cfg.train.accelerator,
+        max_epochs=cfg.train.epochs,
+        callbacks=[checkpoint_callback],
+    )
 
-    # plt.plot(iteration_list, loss_list)
-    # plt.xlabel("No. of Iteration")
-    # plt.ylabel("Loss")
-    # plt.title("Iterations vs Loss")
-    # plt.savefig("./training_loss.png")
+    trainer.fit(model, datamodule=dm)
 
 
 if __name__ == "__main__":

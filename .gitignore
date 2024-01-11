@@ -163,3 +163,5 @@ cython_debug/
 *.pth
 *.csv
 fashion_mnist/outputs/
+fashion_mnist/lightning_logs/
+*.ckpt

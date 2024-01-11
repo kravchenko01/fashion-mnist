@@ -1,68 +1,9 @@
 import hydra
+import lightning.pytorch as pl
 import numpy as np
-import torch
+from data import MyDataModule
 from model import FashionCNN
-from omegaconf import DictConfig  # , OmegaConf
-from torch.utils.data import DataLoader
-from torchvision import datasets, transforms
-
-
-def output_label(label):
-    output_mapping = {
-        0: "T-shirt/Top",
-        1: "Trouser",
-        2: "Pullover",
-        3: "Dress",
-        4: "Coat",
-        5: "Sandal",
-        6: "Shirt",
-        7: "Sneaker",
-        8: "Bag",
-        9: "Ankle Boot",
-    }
-    input = label.item() if type(label) is torch.Tensor else label
-    return output_mapping[input]
-
-
-def test_model(model, test_loader, batch_size, device):
-    # Testing the model
-    model.eval()
-
-    correct = 0
-    total = 0
-
-    class_correct = [0.0 for _ in range(10)]
-    total_correct = [0.0 for _ in range(10)]
-
-    predicted_lst = []
-
-    with torch.no_grad():
-        for images, labels in test_loader:
-            images, labels = images.to(device), labels.to(device)
-
-            outputs = model(images)
-
-            predicted = torch.max(outputs, 1)[1].to(device)
-            predicted_lst += list(predicted.numpy())
-            c = (predicted == labels).squeeze()
-
-            correct += (predicted == labels).sum()
-            total += len(labels)
-
-            for i in range(batch_size):
-                label = labels[i]
-                class_correct[label] += c[i].item()
-                total_correct[label] += 1
-
-    metrics_dct = {}
-    metrics_dct["Accuracy"] = (correct / total).item()
-
-    for i in range(10):
-        metrics_dct["Accuracy of {}:".format(output_label(i))] = (
-            class_correct[i] / total_correct[i]
-        )
-
-    return metrics_dct, predicted_lst
+from omegaconf import DictConfig
 
 
 @hydra.main(version_base="1.3", config_path="../conf", config_name="config")
@@ -70,29 +11,21 @@ def main(cfg: DictConfig):
     # считываем с диска модель, загружаем валидационный датасет,
     # предсказываем моделью ответы для этих данных,
     # записываем ответы на диск в .csv файл,
-    # выводим в stdout (`print`) необходимые метрики на этом датасете.
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    # выводим в stdout необходимые метрики на этом датасете.
+    pl.seed_everything(42)
 
-    test_set = datasets.FashionMNIST(
-        root=cfg.data.path,
-        train=False,
-        download=False,
-        transform=transforms.Compose([transforms.ToTensor()]),
+    dm = MyDataModule(
+        data_path=cfg.data.path,
+        batch_size=cfg.data.batch_size,
     )
-    test_loader = DataLoader(test_set, batch_size=cfg.infer.batch_size, shuffle=False)
+    model = FashionCNN.load_from_checkpoint("./weights_FashionCNN.ckpt", cfg=cfg)
 
-    model = FashionCNN(num_classes=cfg.model.num_classes)
-    model.load_state_dict(torch.load("./trained_weights_FashionCNN.pth"))
-    model.to(device)
+    trainer = pl.Trainer(accelerator="cpu")
 
-    metrics_dct, predicted_lst = test_model(
-        model, test_loader, batch_size=cfg.infer.batch_size, device=device
-    )
-    print("METRICS ON TEST DATA:")
-    for i in metrics_dct:
-        print(i, metrics_dct[i])
+    trainer.test(model, datamodule=dm)
 
-    np.savetxt("predicted_labels.csv", np.array(predicted_lst), delimiter=",")
+    predictions = trainer.predict(model, datamodule=dm)
+    np.savetxt("predicted_labels.csv", np.array(predictions).flatten(), delimiter=",")
 
 
 if __name__ == "__main__":

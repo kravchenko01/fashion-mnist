@@ -1,4 +1,4 @@
-# Fashion MNIST classification
+# Fashion MNIST classification (MLOps pipeline)
 
 Задача классификации одежды на наборе данных [Fashion-MNIST](https://github.com/zalandoresearch/fashion-mnist)
 

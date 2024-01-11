@@ -1,10 +1,9 @@
 data:
   path: ../data
+  batch_size: 100
 model:
   num_classes: 10
 train:
-  batch_size: 100
-  epochs: 1
+  accelerator: cpu
+  epochs: 3
   learning_rate: 0.001
-infer:
-  batch_size: 100
