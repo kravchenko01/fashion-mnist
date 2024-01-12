@@ -38,6 +38,9 @@ class FashionCNN(pl.LightningModule):
         self.acc = torchmetrics.classification.Accuracy(
             task="multiclass", num_classes=self.cfg.model.num_classes
         )
+        self.train_acc = torchmetrics.classification.Accuracy(
+            task="multiclass", num_classes=self.cfg.model.num_classes
+        )
 
     def forward(self, x):
         out = self.layer1(x)
@@ -53,14 +56,24 @@ class FashionCNN(pl.LightningModule):
         images, labels = batch
         preds = self(images)
         loss = self.loss_fn(preds, labels)
-        self.log("train_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
-        return {"loss": loss}
+        self.train_acc(preds, labels)
+        self.log_dict(
+            {"train_loss": loss, "train_acc": self.train_acc},
+            on_step=False,
+            on_epoch=True,
+            prog_bar=True,
+        )
+        return {"loss": loss, "train_acc": self.train_acc}
 
     def test_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0):
         images, labels = batch
         preds = self(images)
         self.acc.update(preds, labels)
         return {"test_acc": self.acc}
+
+    def on_test_epoch_end(self):
+        self.log("test_acc", self.acc.compute())
+        self.acc.reset()
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         images, labels = batch
@@ -71,6 +84,6 @@ class FashionCNN(pl.LightningModule):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.cfg.train.learning_rate)
         return optimizer
 
-    def on_test_epoch_end(self):
-        self.log("test_acc", self.acc.compute())
-        self.acc.reset()
+    def on_before_optimizer_step(self, optimizer):
+        self.log_dict(pl.utilities.grad_norm(self, norm_type=2))
+        super().on_before_optimizer_step(optimizer)

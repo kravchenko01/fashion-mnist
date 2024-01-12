@@ -16,6 +16,13 @@ def main(cfg: DictConfig):
     )
     model = FashionCNN(cfg)
 
+    loggers = [
+        pl.loggers.MLFlowLogger(
+            experiment_name=cfg.mlflow.experiment_name,
+            tracking_uri=cfg.mlflow.uri,
+        ),
+    ]
+
     checkpoint_callback = pl.callbacks.ModelCheckpoint(
         dirpath="./", filename="weights_FashionCNN"
     )
@@ -23,6 +30,7 @@ def main(cfg: DictConfig):
     trainer = pl.Trainer(
         accelerator=cfg.train.accelerator,
         max_epochs=cfg.train.epochs,
+        logger=loggers,
         callbacks=[checkpoint_callback],
     )
 
