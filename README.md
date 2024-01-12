@@ -32,7 +32,7 @@ pre-commit run --all-files
 
 [Google Drive с данными для DVC](https://drive.google.com/drive/u/6/folders/1pseSLm5GJNShatTFvCr5DsU9K61fVr5R)
 
-- Загрузка данных:
+- Загрузка данных и обученных весов:
 ```bash
 dvc pull
 ```

@@ -1,0 +1,5 @@
+outs:
+- md5: e0ac485e1df15c1a2f2ec73b47d582f1
+  size: 17724697
+  hash: md5
+  path: weights_FashionCNN.ckpt
